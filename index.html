@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ULIS - Where Your Global Journey Begins</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Roboto:wght@300;400;500;700&display=swap');
+
+        :root {
+            --ulis-red: #b91c1c;
+            --ulis-blue: #1e3a8a;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Playfair Display', serif;
+        }
+
+        .bg-ulis-red { background-color: var(--ulis-red); }
+        .text-ulis-red { color: var(--ulis-red); }
+        .bg-ulis-blue { background-color: var(--ulis-blue); }
+        .text-ulis-blue { color: var(--ulis-blue); }
+
+        .hero-pattern {
+            background-color: #ffffff;
+            background-image: radial-gradient(#1e3a8a 0.5px, #ffffff 0.5px);
+            background-size: 10px 10px;
+        }
+
+        .clip-diagonal {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        /* Chat Widget Styles */
+        .chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .chat-window {
+            width: 350px;
+            height: 500px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow: hidden;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            background-color: #f9fafb;
+        }
+
+        .message {
+            margin-bottom: 12px;
+            max-width: 80%;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            background-color: var(--ulis-blue);
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.bot {
+            background-color: white;
+            color: #374151;
+            align-self: flex-start;
+            border: 1px solid #e5e7eb;
+            border-bottom-left-radius: 2px;
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background-color: #9ca3af;
+            border-radius: 50%;
+            animation: typing 1.4s infinite ease-in-out both;
+            margin: 0 1px;
+        }
+        
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        /* Print styles */
+        @media print {
+            .no-print { display: none !important; }
+            body { -webkit-print-color-adjust: exact; }
+            .page-break { page-break-before: always; }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <!-- Import Gemini API -->
+    <script type="importmap">
+      {
+        "imports": {
+          "@google/generative-ai": "https://esm.run/@google/generative-ai"
+        }
+      }
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+    <!-- Navigation / Header -->
+    <nav class="bg-white shadow-md fixed w-full z-50 transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <div class="flex items-center space-x-3">
+                    <!-- Logo Image -->
+                    <img src="https://tse4.mm.bing.net/th/id/OIP.Z4hQTyN0VUm1Icpn5hPXPAHaHa?cb=ucfimg2&ucfimg=1&w=2268&h=2268&rs=1&pid=ImgDetMain&o=7&rm=3" alt="ULIS Logo" class="h-12 w-12 rounded-full object-cover border-2 border-ulis-red">
+                    <div>
+                        <span class="block text-lg font-bold text-gray-900 leading-none">ULIS</span>
+                        <span class="block text-xs text-gray-500 uppercase tracking-widest">VNU, Hanoi</span>
+                    </div>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" class="text-gray-600 hover:text-ulis-red font-medium transition">About ULIS</a>
+                    <a href="#faculty" class="text-gray-600 hover:text-ulis-red font-medium transition">English Faculty</a>
+                    <a href="#student-life" class="text-gray-600 hover:text-ulis-red font-medium transition">Student Life</a>
+                    <a href="#ai-guide" class="text-ulis-blue font-bold hover:text-ulis-red transition flex items-center gap-1"><i class="fas fa-sparkles"></i> AI Guide</a>
+                    <a href="#contact" class="px-4 py-2 bg-ulis-red text-white rounded-md hover:bg-red-800 transition shadow-lg">Contact</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-500 hover:text-gray-900 focus:outline-none">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative bg-white h-screen flex items-center justify-center overflow-hidden pt-20">
+        <div class="absolute inset-0 z-0">
+             <!-- Placeholder for a Hero Image (e.g., A1 Building or Sunwah) -->
+            <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80" alt="University Campus" class="w-full h-full object-cover opacity-20">
+            <div class="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent"></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 text-left fade-in-up">
+                <span class="inline-block py-1 px-3 rounded-full bg-blue-100 text-ulis-blue text-sm font-semibold mb-4 tracking-wide">EST. 1955</span>
+                <h1 class="text-5xl md:text-7xl font-bold text-gray-900 leading-tight mb-6">
+                    Creating <span class="text-ulis-red">Opportunities</span> Together.
+                </h1>
+                <p class="text-xl text-gray-600 mb-8 max-w-lg leading-relaxed">
+                    Welcome to the University of Languages and International Studies (ULIS), a prestigious member of Vietnam National University, Hanoi.
+                </p>
+                <div class="flex space-x-4">
+                    <a href="#faculty" class="px-8 py-3 bg-ulis-blue text-white rounded-full font-semibold hover:bg-blue-900 transition shadow-lg flex items-center">
+                        Explore English Faculty <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="md:w-1/2 mt-12 md:mt-0 relative">
+                <!-- Abstract Design Element -->
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-72 h-72 bg-red-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                <div class="absolute top-0 right-40 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                
+                <div class="relative rounded-2xl shadow-2xl overflow-hidden border-8 border-white transform rotate-3 hover:rotate-0 transition duration-500">
+                    <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Students graduating" class="w-full h-auto">
+                    <div class="absolute bottom-0 left-0 bg-white/90 backdrop-blur-sm p-4 w-full">
+                        <p class="text-sm font-bold text-gray-800">"ULIS is not just a school, it's a home."</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Why ULIS Section -->
+    <section id="about" class="py-20 bg-white clip-diagonal pb-32">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Why Choose ULIS?</h2>
+                <div class="w-24 h-1 bg-ulis-red mx-auto"></div>
+                <p class="mt-4 text-gray-600 max-w-2xl mx-auto">A leading center for foreign language teacher education and international studies in Vietnam.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Card 1 -->
+                <div class="bg-gray-50 p-8 rounded-xl shadow-sm hover:shadow-xl transition duration-300 border-t-4 border-ulis-red text-center">
+                    <div class="w-16 h-16 bg-red-100 text-ulis-red rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+                        <i class="fas fa-university"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Prestigious Heritage</h3>
+                    <p class="text-gray-600">With over 65 years of history, ULIS is a proud member of VNU - the #1 University system in Vietnam.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-gray-50 p-8 rounded-xl shadow-sm hover:shadow-xl transition duration-300 border-t-4 border-ulis-blue text-center">
+                    <div class="w-16 h-16 bg-blue-100 text-ulis-blue rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+                        <i class="fas fa-globe-asia"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Global Mindset</h3>
+                    <p class="text-gray-600">We offer 8 languages and have partnerships with many universities worldwide.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-gray-50 p-8 rounded-xl shadow-sm hover:shadow-xl transition duration-300 border-t-4 border-ulis-red text-center">
+                    <div class="w-16 h-16 bg-red-100 text-ulis-red rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Vibrant Community</h3>
+                    <p class="text-gray-600">Home to the most dynamic student clubs and events in Hanoi. Once a ULIS-er, always a ULIS-er.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Faculty Section -->
+    <section id="faculty" class="py-20 bg-gray-900 text-white relative">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10" style="background-image: url('https://www.transparenttextures.com/patterns/cubes.png');"></div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2">
+                    <h2 class="text-ulis-red text-lg font-bold uppercase tracking-wider mb-2">The Spotlight</h2>
+                    <h3 class="text-4xl md:text-5xl font-bold mb-6 font-serif">Faculty of English Language & Culture</h3>
+                    <p class="text-gray-300 text-lg mb-6 leading-relaxed">
+                        The Faculty of English is the flagship department of ULIS. We do not just teach English; we unlock cultures, literatures, and global communication skills.
+                    </p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-ulis-red mt-1 mr-3"></i>
+                            <div>
+                                <strong class="block text-white">Top-tier Lecturers</strong>
+                                <span class="text-sm text-gray-400">Masters and PhD holders from leading universities.</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-ulis-red mt-1 mr-3"></i>
+                            <div>
+                                <strong class="block text-white">Advanced Curriculum</strong>
+                                <span class="text-sm text-gray-400">Focusing on Linguistics, International Studies, Translation, and Teacher Education.</span>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-ulis-red mt-1 mr-3"></i>
+                            <div>
+                                <strong class="block text-white">Career Ready</strong>
+                                <span class="text-sm text-gray-400">High employability rate in diplomacy, MNCs, education, and media.</span>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="md:w-1/2">
+                    <div class="grid grid-cols-2 gap-4">
+                        <img src="https://en.ulis.vnu.edu.vn/files/uploads/2018/10/IMG_0077-500x300.jpg" alt="English Class">
+                        <img src="https://en.ulis.vnu.edu.vn/files/uploads/2018/03/98c1d-dsc_1777-10-500x300.jpg" class="rounded-lg shadow-lg" alt="Library">
+                        <img src="https://en.ulis.vnu.edu.vn/files/uploads/2025/06/image-1-1024x643-500x300.png" class="rounded-lg shadow-lg" alt="Group Study">
+                        <div class="bg-ulis-red rounded-lg flex items-center justify-center transform -translate-y-4 shadow-lg p-6">
+                            <div class="text-center">
+                                <span class="block text-4xl font-bold text-white mb-1">1000+</span>
+                                <span class="text-white text-sm opacity-90">Students Enrolled Annually</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Student Life / Gallery -->
+    <section id="student-life" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-900">Life as a ULIS-er</h2>
+                <p class="mt-4 text-gray-600">Dynamic. Creative. Unforgettable.</p>
+            </div>
+
+            <!-- Brochure Grid Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 h-96">
+                <div class="md:col-span-2 md:row-span-2 relative group overflow-hidden rounded-xl cursor-pointer">
+                    <img src="https://ulis.vnu.edu.vn/files/uploads/2023/10/Anh-3-scaled.jpg" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Music Club">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6">
+                        <div>
+                            <h4 class="text-white font-bold text-xl">Art & Culture Clubs</h4>
+                            <p class="text-gray-300 text-sm">Join over 30+ clubs ranging from Music, Dance to Debate.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden rounded-xl cursor-pointer">
+                    <img src="https://tse1.mm.bing.net/th/id/OIP.ojiXjSKTsh6zlDJQfqYeswHaFj?cb=ucfimg2&ucfimg=1&rs=1&pid=ImgDetMain&o=7&rm=3" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Volunteer">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                        <h4 class="text-white font-bold">Volunteering</h4>
+                    </div>
+                </div>
+                <div class="relative group overflow-hidden rounded-xl cursor-pointer">
+                    <img src="https://ulis.vnu.edu.vn/files/uploads/2022/11/2022-11-12_9-16-04.png" class="w-full h-full object-cover transition duration-500 group-hover:scale-110" alt="Hanoi City">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-4">
+                        <h4 class="text-white font-bold">Hanoi Adventures</h4>
+                    </div>
+                </div>
+                <div class="md:col-span-2 relative bg-ulis-blue rounded-xl flex items-center justify-center p-8 text-center">
+                    <div>
+                        <i class="fas fa-quote-left text-ulis-red text-3xl mb-4"></i>
+                        <p class="text-white text-lg italic mb-4">"Studying at ULIS Faculty of English was the best decision of my life. The environment is incredibly supportive and international."</p>
+                        <p class="text-gray-400 font-bold">- Alumni</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEW SECTION: AI Cultural Guide (Gemini Powered) -->
+    <section id="ai-guide" class="py-20 bg-gray-50 border-t border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <span class="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider mb-3">Powered by Gemini ✨</span>
+            <h2 class="text-3xl font-bold text-gray-900 mb-6 font-serif">Hanoi Cultural Pocket Guide</h2>
+            <p class="text-gray-600 mb-8">
+                Moving to a new country can be overwhelming. Let our AI assistant generate a useful 
+                Vietnamese survival phrase or a unique cultural tip for you!
+            </p>
+
+            <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl mx-auto relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-ulis-red to-ulis-blue"></div>
+                
+                <div id="ai-content-area" class="min-h-[120px] flex items-center justify-center mb-6">
+                    <p class="text-gray-400 italic">Click the button below to discover something new about Vietnam!</p>
+                </div>
+
+                <button onclick="generateCulturalTip()" id="generate-btn" class="px-10 py-4 bg-gradient-to-r from-red-500 to-ulis-red text-white font-bold text-lg rounded-full shadow-md hover:shadow-xl hover:scale-105 transition transform flex items-center justify-center mx-auto">
+                    <i class="fas fa-magic mr-2"></i> Get Cultural Tip
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action / Footer -->
+    <footer id="contact" class="bg-gray-100 pt-16 border-t border-gray-200 pb-20 md:pb-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-gray-900 mb-8 font-serif">Contact Information</h2>
+                <p class="text-gray-600 mb-8 max-w-2xl mx-auto">
+                    University of Languages & International Studies, VNU.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 justify-items-center">
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 bg-white shadow rounded-full flex items-center justify-center text-ulis-red mb-4">
+                            <i class="fas fa-map-marker-alt text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Address</h4>
+                        <span class="text-gray-600 text-center">No. 2 Pham Van Dong Street,<br>Cau Giay, Hanoi, Vietnam</span>
+                    </div>
+
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 bg-white shadow rounded-full flex items-center justify-center text-ulis-red mb-4">
+                            <i class="fas fa-envelope text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Email</h4>
+                        <span class="text-gray-600">ulis.international@vnu.edu.vn</span>
+                    </div>
+
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 bg-white shadow rounded-full flex items-center justify-center text-ulis-red mb-4">
+                            <i class="fas fa-phone text-xl"></i>
+                        </div>
+                        <h4 class="font-bold text-gray-800 mb-2">Phone</h4>
+                        <span class="text-gray-600">024 37547988</span>
+                    </div>
+                </div>
+            </div>
+            
+
+    <!-- Chat Widget Implementation -->
+    <div class="chat-widget no-print">
+        <!-- Chat Window -->
+        <div id="chat-window" class="chat-window">
+            <div class="bg-ulis-red text-white p-4 flex justify-between items-center shadow-sm">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center mr-2">
+                        <i class="fas fa-robot text-sm"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm">ULIS Ambassador</h3>
+                        <p class="text-xs text-white/80">Online • Powered by Gemini</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div id="chat-messages" class="chat-messages flex flex-col">
+                <!-- Initial Message -->
+                <div class="message bot">
+                    Hello! 👋 I'm your AI Ambassador from the Faculty of English. Ask me anything about student life, clubs, or living in Hanoi!
+                </div>
+            </div>
+
+            <div class="p-3 bg-white border-t border-gray-100">
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="user-input" class="flex-grow px-3 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-ulis-red" placeholder="Type a question...">
+                    <button type="submit" class="w-9 h-9 bg-ulis-blue text-white rounded-full flex items-center justify-center hover:bg-blue-800 transition shadow-sm">
+                        <i class="fas fa-paper-plane text-xs"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Toggle Button -->
+        <button onclick="toggleChat()" class="h-14 w-14 bg-ulis-red text-white rounded-full shadow-lg hover:bg-red-800 transition flex items-center justify-center text-2xl animate-bounce-slow">
+            <i class="fas fa-comment-dots"></i>
+        </button>
+    </div>
+
+    <script type="module">
+        import { GoogleGenerativeAI } from "@google/generative-ai";
+
+        // Initialize Gemini API
+        // NOTE: In a real deployment, never expose your API key in client-side code.
+        // This is a demo environment where the key is handled securely by the platform.
+        const apiKey = ""; 
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
+
+        // --- Chatbot Logic ---
+        const chatForm = document.getElementById('chat-form');
+        const userInput = document.getElementById('user-input');
+        const chatMessages = document.getElementById('chat-messages');
+
+        // System Prompt for the Chatbot Persona
+        const chatSystemPrompt = `You are a friendly and enthusiastic senior student ambassador at the University of Languages and International Studies (ULIS) in Hanoi, specifically from the Faculty of English Language & Culture. 
+        Your tone is welcoming, helpful, and encouraging. You love your school.
+        Keep your answers concise (under 50 words usually) and helpful for international students. 
+        Use emojis ✨ occasionally.
+        If asked about admissions, suggest they contact the email in the footer.
+        Context: ULIS is part of VNU. We have many clubs. Hanoi is vibrant but traffic can be crazy.
+        `;
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            // Add user message to UI
+            addMessage(message, 'user');
+            userInput.value = '';
+
+            // Show typing indicator
+            const typingId = addTypingIndicator();
+            scrollToBottom();
+
+            try {
+                // Call Gemini API
+                const result = await model.generateContent({
+                    contents: [
+                        { role: 'user', parts: [{ text: chatSystemPrompt + "\nUser question: " + message }] }
+                    ]
+                });
+                const response = result.response.text();
+                
+                // Remove typing indicator and add bot response
+                removeMessage(typingId);
+                addMessage(response, 'bot');
+            } catch (error) {
+                console.error("Error:", error);
+                removeMessage(typingId);
+                addMessage("Oops! My connection to the campus wifi is a bit spotty (API Error). Try again?", 'bot');
+            }
+            scrollToBottom();
+        });
+
+        window.addMessage = function(text, sender) {
+            const div = document.createElement('div');
+            div.className = `message ${sender} fade-in-up`;
+            div.textContent = text;
+            chatMessages.appendChild(div);
+        }
+
+        window.addTypingIndicator = function() {
+            const id = 'typing-' + Date.now();
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'message bot typing-indicator';
+            div.innerHTML = '<span></span><span></span><span></span>';
+            chatMessages.appendChild(div);
+            return id;
+        }
+
+        window.removeMessage = function(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+
+        window.scrollToBottom = function() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // --- Cultural Tip Logic ---
+        window.generateCulturalTip = async function() {
+            const displayArea = document.getElementById('ai-content-area');
+            const btn = document.getElementById('generate-btn');
+            
+            // Loading State
+            displayArea.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const tipSystemPrompt = `
+            Generate a short, fun, and useful "Card" for an international student in Hanoi.
+            Randomly choose ONE of these types:
+            1. A useful Vietnamese survival phrase (with English meaning and pronunciation guide).
+            2. A fun fact about Hanoi culture (e.g., egg coffee, crossing the street, seasons).
+            3. A student budget tip for Hanoi.
+            
+            Format clearly. Keep it short and engaging. Use emojis.
+            `;
+
+            try {
+                const result = await model.generateContent(tipSystemPrompt);
+                const text = result.response.text();
+                
+                // Simple formatting for the card
+                displayArea.innerHTML = `
+                    <div class="text-left animate-fade-in">
+                        <p class="text-lg text-gray-800 font-medium leading-relaxed" style="white-space: pre-wrap;">${text}</p>
+                    </div>
+                `;
+            } catch (error) {
+                displayArea.innerHTML = `<p class="text-red-500">Couldn't fetch a tip right now. Try again!</p>`;
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    </script>
+    
+    <script>
+        // UI Logic for toggling chat
+        function toggleChat() {
+            const chatWindow = document.getElementById('chat-window');
+            if (chatWindow.style.display === 'flex') {
+                chatWindow.style.display = 'none';
+            } else {
+                chatWindow.style.display = 'flex';
+                // Focus input when opened
+                setTimeout(() => document.getElementById('user-input').focus(), 100);
+            }
+        }
+    </script>
+</body>
+</html>
